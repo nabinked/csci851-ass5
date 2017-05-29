@@ -16,11 +16,31 @@ public:
 	Criminal(string FName, string LName, string Crm, int Mths, int Cell);
 	bool operator<(const Criminal &C);
 	virtual void Print();
+	void ReduceSentence(int months);
+	bool CanBeReleased();
+	virtual bool ReadyForParole();
+	//get-set
+	int GetMonths();
+	void SetMonths(int months);
+
+	string GetFamilyName();
+	void SetFamilyName(string famName);
+	
+	string GetFirstName();
+	void SetFirstName(string fName);
+
+	string GetCrime();
+	void SetCrime(string crime);
+
+	void SetCellNo(int cellNo);
+
 protected:
 	string FamilyName, FirstName; // Prisoner's name
 	string Crime; // Crime Committed 
 	int Months;// Number of months remaining in sentence
 	int CellNo; // The cell the inmate occupies, initially set to -1
+
+
 };
 
 //derived classes...
@@ -33,6 +53,12 @@ public:
 	void Print() {
 		cout << "Cell " << this->CellNo << " " << this->FamilyName << ", " << this->FirstName << " ";
 		cout << "[" << this->Months << " months for stealing" << " $" << AmountStolen << "]" << endl;
+	}
+	bool ReadyForParole() {
+		return this->Months <= 12;
+	}
+	int GetAmountStolen() {
+		return this->AmountStolen;
 	}
 private:
 	int AmountStolen;
@@ -48,6 +74,20 @@ public:
 	void Print() {
 		cout << "Cell " << this->CellNo << " " << this->FamilyName << ", " << this->FirstName << " ";
 		cout << "[" << this->Months << " months for murdering" << " " << VictimsFamilyName << ", " << FirstName << "]" << endl;
+	}
+
+	bool ReadyForParole() {
+		return this->Months <= 6;
+	}
+
+	string GetVictimFirstName()
+	{
+		return this->VictimsFirstName;
+	}
+
+	string GetVictimFamilyName()
+	{
+		return this->VictimsFamilyName;
 	}
 private:
 	string VictimsFirstName, VictimsFamilyName;

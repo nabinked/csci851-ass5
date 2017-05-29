@@ -59,10 +59,73 @@ void Prison::DisplayPrisioners() {
 				criminalIterator++;
 			}
 		}
-		if (criminalIterator != Crims.end() && !Continue()) {
+		if (criminalIterator != Crims.end() && !Prompt()) {
 			break;
 		}
 	}
+}
+
+void Prison::ReduceSentence()
+{
+	CriminalSet criminalsToRelease;
+	for (CriminalIterator criminalItr = Crims.begin(); criminalItr != Crims.end(); criminalItr++)
+	{
+		(*criminalItr)->ReduceSentence(6);
+		if ((*criminalItr)->CanBeReleased()) {
+			criminalsToRelease.insert(*criminalItr);
+		}
+	}
+
+	if (criminalsToRelease.size() > 0) {
+		ProcessSenetenceReduced(criminalsToRelease);
+	}
+	WriteToFile(Crims);
+}
+
+void Prison::CheckForParole()
+{
+	CriminalSet criminalsToParole;
+	for (CriminalIterator criminalItr = Crims.begin(); criminalItr != Crims.end(); criminalItr++)
+	{
+		if ((*criminalItr)->ReadyForParole()) {
+			criminalsToParole.insert(*criminalItr);
+		}
+	}
+
+	if (criminalsToParole.size() > 0) {
+		ProcessParole(criminalsToParole);
+	}
+	WriteToFile(Crims);
+}
+
+void Prison::AddNewPrisoner()
+{
+	Criminal *newCrim = new Criminal();
+
+	//First name
+	newCrim->SetFirstName(GetName("First"));
+
+	//Fam Name
+	string famName = GetName("Family");
+	MakeUpper(famName);
+	newCrim->SetFamilyName(famName);
+
+	//Crime
+	string crime;
+	GetUserInputTo(crime, "Crime: ");
+	MakeUpper(crime);
+	newCrim->SetCrime(crime);
+
+	//sentence
+	newCrim->SetMonths(GetMonths());
+
+	//Cell no
+	newCrim->SetCellNo(Crims.size() + 1);
+	newCrim->Print();
+
+	Crims.insert(newCrim);
+	WriteToFile(Crims);
+	cout << "... has been added to prison" << endl;
 }
 
 Criminal* Prison::GetCriminal(string line, int cellNo)
@@ -91,3 +154,106 @@ Criminal* Prison::GetCriminal(string line, int cellNo)
 
 }
 
+void Prison::ProcessSenetenceReduced(CriminalSet &criminalsToRelease)
+{
+	cout << criminalsToRelease.size() << " prisoners have reached their release date." << endl;
+	for (CriminalIterator crimItr = criminalsToRelease.begin(); crimItr != criminalsToRelease.end(); crimItr++)
+	{
+		(*crimItr)->Print();
+	}
+	for (CriminalIterator crimItr = Crims.begin(); crimItr != Crims.end();)
+	{
+		string fName = (*crimItr)->GetFirstName();
+		string famName = (*crimItr)->GetFamilyName();
+		if ((*crimItr)->CanBeReleased()) {
+			string prompt = "Do you want to release " + fName + " " + famName + " (y/n)?";
+			if (Prompt(prompt)) {
+				Crims.erase(crimItr++);//Remove from list
+				cout << fName << " " << famName << " has been released" << endl;
+			}
+			else {
+				(*crimItr)->SetMonths(6);
+				cout << fName << " " << famName << "'s sentence has been increased to 6 months" << endl;
+				crimItr++;
+			}
+		}
+		else {
+			crimItr++;
+		}
+
+	}
+}
+
+void Prison::ProcessParole(CriminalSet & criminalsToRelease)
+{
+	cout << criminalsToRelease.size() << " prisoners have reached their parole date." << endl;
+	for (CriminalIterator crimItr = criminalsToRelease.begin(); crimItr != criminalsToRelease.end(); crimItr++)
+	{
+		(*crimItr)->Print();
+	}
+
+	for (CriminalIterator crimItr = Crims.begin(); crimItr != Crims.end();)
+	{
+		string fName = (*crimItr)->GetFirstName();
+		string famName = (*crimItr)->GetFamilyName();
+		if ((*crimItr)->ReadyForParole()) {
+			string prompt = "Do you want to	parole " + fName + " " + famName + " (y/n)?";
+			if (Prompt(prompt)) {
+				Crims.erase(crimItr++);//Remove from list
+				cout << fName << " " << famName << " has been paroled" << endl;
+			}
+			else {
+				crimItr++;
+				cout << fName << " " << famName << " has been refused" << endl;
+			}
+		}
+		else {
+			crimItr++;
+		}
+	}
+
+}
+
+//Get Name from cin
+string Prison::GetName(string type)
+{
+	string input;
+	GetUserInputTo(input, type + " Name: ");
+	if (ValidName(input)) {
+		MakeFirstLetterUpper(input);
+		return input;
+	}
+	else {
+		return GetName(type);
+	}
+}
+
+int Prison::GetMonths()
+{
+	int months;
+	GetUserInputTo(months, "Senetence (months): ");
+	if (months > 1) {
+		return months;
+	}
+	else {
+		return GetMonths();
+	}
+
+}
+
+
+//Validate name
+bool Prison::ValidName(string &name)
+{
+	//check for length
+	if (name.length() < 1 || name.length() > 50) {
+		cout << "Name length is not valid. Name must be between 1 and 50 characters." << endl;
+		return false;
+	}
+	//check if all alphabets
+	if (!IsAllAlpha(name)) {
+		cout << "Name should be all alphabet." << endl;
+		return false;
+	}
+	return true;
+}
